@@ -472,6 +472,9 @@ MonoBehaviour:
   _basicSize: 2
   _cageDistance: {x: 2, y: 10}
   _cameraDistance: 2
+  _layerMask:
+    serializedVersion: 2
+    m_Bits: 512
   _cageLayers:
   - CubeMaterial: {fileID: 2100000, guid: 3059cad89ba412040884b0554a85620f, type: 2}
     CubeHp: 1
@@ -497,7 +500,6 @@ MonoBehaviour:
     CubeHp: 1
   - CubeMaterial: {fileID: 2100000, guid: 81a2e5499237b584a8ad93a6d2aebf9e, type: 2}
     CubeHp: 1
-  _screenScale: 1
 --- !u!4 &1806755902
 Transform:
   m_ObjectHideFlags: 0

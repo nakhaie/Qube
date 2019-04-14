@@ -3,19 +3,36 @@
 public class Cube : MonoBehaviour, ICube
 {
     [SerializeField] private MeshRenderer _renderer;
+    [SerializeField] private Collider _collider;
     
     private int _hp;
 
-    public void Init(string unitName, int hp, Material material)
+    public bool HasActive
+    {
+        get => gameObject.activeSelf;
+        set => gameObject.SetActive(value);
+    }
+    
+    public bool HasEnabled
+    {
+        get => _collider.enabled;
+        set => _collider.enabled = value;
+    }
+
+    public void Init(string unitName, Vector3 pos, int hp, Material material)
     {
         _hp = hp;
         _renderer.material = material;
         name = unitName;
+
+        transform.position = pos;
+
+        HasActive = true;
     }
 
     public void DestroyBody()
     {
-        Destroy(gameObject);
+        HasActive = false;
     }
 
     public void Damaged(int value)
@@ -36,9 +53,11 @@ public class Cube : MonoBehaviour, ICube
 
 public interface ICube
 {
-    int HasActive { get; set; }
+    bool HasActive { get; set; }
     
-    void Init(string unitName, int hp, Material material);
+    bool HasEnabled { get; set; }
+    
+    void Init(string unitName, Vector3 pos, int hp, Material material);
         
     void DestroyBody();
 

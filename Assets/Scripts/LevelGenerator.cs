@@ -12,12 +12,14 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] private int _basicSize = 2;
     [SerializeField] private Vector2 _cageDistance;
     [SerializeField] private float _cameraDistance = 1;
+    [SerializeField] private LayerMask _layerMask;
     
     [Header("Cage Layers")]
     [SerializeField] private CageLayer[] _cageLayers;
 
-    private readonly Dictionary<int, IList<ICube>> _cubesInLayers = new Dictionary<int, IList<ICube>>();
-
+    private readonly Dictionary<int, Vector3Int[]> _cubesInLayers = new Dictionary<int, Vector3Int[]>();
+    private readonly Queue<ICube> _cubesPool = new Queue<ICube>();
+    
     private const int ReverseFactor = -1;
     private const int ProgressionFactor = 2;
 
@@ -28,6 +30,11 @@ public class LevelGenerator : MonoBehaviour
     private float _cameraZoom;
 
     private int _curLayer;
+    private int _curTotalCubes;
+
+    private bool _win;
+    
+    private ICube[] _backLayerCubes;
     
     private void Awake()
     {
@@ -38,11 +45,33 @@ public class LevelGenerator : MonoBehaviour
         _screenScaleFactor /= _cageLayers.Length;
     }
 
-    // Start is called before the first frame update
     private void Start()
     {
         CreatLayers(_cageLayers, _basicSize);
+
+        _curLayer = _cageLayers.Length - 1;
+        int totalCubes;
         
+        if (_cageLayers.Length > 1)
+        {
+            totalCubes = _cubesInLayers[_curLayer].Length + _cubesInLayers[_curLayer - 1].Length;
+        }
+        else
+        {
+            totalCubes = _cubesInLayers[_curLayer].Length;
+        }
+        
+        InstantiatePool(totalCubes);
+
+        InstantiateLayer(_curLayer, true);
+
+        _curTotalCubes = _cubesInLayers[_curLayer].Length;
+        
+        if (_cageLayers.Length > 1)
+        {
+            _backLayerCubes = InstantiateLayer(_curLayer - 1, false);
+        }
+
         SetupCamera(_camera, _screenRatio,_cageLayers.Length, _basicSize, _screenScale,
                     _cameraDistance);
 
@@ -52,18 +81,56 @@ public class LevelGenerator : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.R) && _curLayer >= 0)
+        if(_win)
+            return;
+        
+        if (Input.GetMouseButton(0))
         {
-            StartCoroutine(ClearLastLayer());
-        }
+            Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
 
-        if (_cubesInLayers[_curLayer].Count < 1)
+            if (Physics.Raycast(ray, out var hit, 100, _layerMask))
+            {
+                Collider[] units = Physics.OverlapSphere(hit.point, 5);
+
+                foreach (var unit in units)
+                {
+                    ICube cube = unit.transform.GetComponent<ICube>();
+                    cube.DestroyBody();
+
+                    _curTotalCubes--;
+                
+                    _cubesPool.Enqueue(cube);
+                }
+            }
+        }
+        
+        if (_curTotalCubes < 1)
         {
             _cubesInLayers.Remove(_curLayer);
             _curLayer--;
+
+            if (_cubesInLayers.Count < 1)
+            {
+                _win = true;
+                return;
+            }
             
+            Debug.Log(_cubesInLayers.Count);
+            
+            _curTotalCubes = _cubesInLayers[_curLayer].Length;
+  
+            if (_backLayerCubes != null)
+            {
+                foreach (var unit in _backLayerCubes)
+                {
+                    unit.HasEnabled = true;
+                }
+            }
+            
+            _backLayerCubes = _curLayer > 0 ? InstantiateLayer(_curLayer - 1, false) : null;
+
             _cameraZoom = ZoomCamera(_screenRatio, _cubesInLayers.Keys.Count, _basicSize,
-                _screenScale);
+                                    _screenScale);
         }
         else if(Math.Abs(_cameraZoom - _camera.orthographicSize) > 0.1f)
         {
@@ -71,19 +138,10 @@ public class LevelGenerator : MonoBehaviour
         }
         
     }
-
-    private IEnumerator ClearLastLayer()
-    {
-        foreach (var part in _cubesInLayers[_curLayer])
-        {
-            part.DestroyBody();
-            yield return new WaitForEndOfFrame();
-        }
-        
-        _cubesInLayers[_curLayer].Clear();
-    }
-
-    private void CreatLayers(IReadOnlyList<CageLayer> layers, int basicScale)
+    
+    #region Init
+    
+    private void CreatLayers(IReadOnlyCollection<CageLayer> layers, int basicScale)
     {
         for (int i = 0; i < layers.Count; i++)
         {
@@ -93,26 +151,10 @@ public class LevelGenerator : MonoBehaviour
 
             Vector3Int[] cubesPosList = CalculateLayer(rowCount, depth);
 
-            _cubesInLayers.Add(i, InstantiateLayer(i, layers[i], cubesPosList));
+            _cubesInLayers.Add(i, cubesPosList);
         }
     }
     
-    private List<ICube> InstantiateLayer(int layerIndex, CageLayer layerProperty, IReadOnlyList<Vector3Int> cubePos)
-    {
-        List<ICube> result = new List<ICube>();
-        
-        for (int i = 0; i < cubePos.Count; i++)
-        {
-            ICube cube = Instantiate(_cubePrefab, cubePos[i], Quaternion.identity).GetComponent<ICube>();
-
-            cube.Init($"Unit_{layerIndex}_{i}", layerProperty.CubeHp, layerProperty.CubeMaterial);
-            
-            result.Add(cube);
-        }
-
-        return result;
-    }
-
     private Vector3Int[] CalculateLayer(int layerScale, Vector3Int layerDepth)
     {
         List<Vector3Int> result = new List<Vector3Int>();
@@ -146,6 +188,18 @@ public class LevelGenerator : MonoBehaviour
 
         return result.ToArray();
     }
+    
+    private void InstantiatePool(int totalCubes)
+    {
+        for (int i = 0; i < totalCubes; i++)
+        {
+            ICube cube = Instantiate(_cubePrefab, Vector3.zero , Quaternion.identity).GetComponent<ICube>();
+
+            cube.HasActive = false;
+            
+            _cubesPool.Enqueue(cube);
+        }
+    }
 
     private void SetupCamera(Camera cameraProperty, Vector2 screenRatio, int layerIndex, int basicScale,
                             float cageDistance, float cameraDistance)
@@ -159,6 +213,29 @@ public class LevelGenerator : MonoBehaviour
         cameraProperty.orthographicSize = ZoomCamera(screenRatio, layerIndex, basicScale, cageDistance);
     }
 
+    #endregion
+
+    #region Action
+    
+    private ICube[] InstantiateLayer(int layerIndex, bool cubesEnabled)
+    {     
+        ICube[] result = new ICube[_cubesInLayers[layerIndex].Length];
+        
+        for (int i = 0; i < result.Length; i++)
+        {
+            ICube cube = _cubesPool.Dequeue();
+            
+            cube.Init($"Unit_{layerIndex}_{i}", _cubesInLayers[layerIndex][i], _cageLayers[layerIndex].CubeHp,
+                _cageLayers[layerIndex].CubeMaterial);
+
+            cube.HasEnabled = cubesEnabled;
+
+            result[i] = cube;
+        }
+
+        return result;
+    }
+    
     private float ZoomCamera(Vector2 screenRatio, int layerIndex, int basicScale,
                             float cageDistance)
     {
@@ -179,6 +256,8 @@ public class LevelGenerator : MonoBehaviour
 
         return cameraSize;
     }
+    
+    #endregion
 }
 
 [System.Serializable]
