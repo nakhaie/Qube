@@ -95,11 +95,8 @@ public class LevelGenerator : MonoBehaviour
                 foreach (var unit in units)
                 {
                     ICube cube = unit.transform.GetComponent<ICube>();
-                    cube.DestroyBody();
 
-                    _curTotalCubes--;
-                
-                    _cubesPool.Enqueue(cube);
+                    DestroyCube(cube);
                 }
             }
         }
@@ -136,7 +133,6 @@ public class LevelGenerator : MonoBehaviour
         {
             _camera.orthographicSize = Mathf.Lerp(_camera.orthographicSize, _cameraZoom, Time.deltaTime * 2);
         }
-        
     }
     
     #region Init
@@ -255,6 +251,25 @@ public class LevelGenerator : MonoBehaviour
         cameraSize /= ProgressionFactor;
 
         return cameraSize;
+    }
+
+    private void DestroyCube(ICube cube)
+    {
+        cube.DestroyBody();
+
+        _curTotalCubes--;
+                
+        _cubesPool.Enqueue(cube);
+    }
+
+    private void AttackCube(ICube cube, int damage)
+    {
+        if (!cube.Damaged(damage))
+            return;
+        
+        _curTotalCubes--;
+                
+        _cubesPool.Enqueue(cube);
     }
     
     #endregion

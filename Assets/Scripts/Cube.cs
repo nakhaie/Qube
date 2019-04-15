@@ -35,14 +35,16 @@ public class Cube : MonoBehaviour, ICube
         HasActive = false;
     }
 
-    public void Damaged(int value)
+    public bool Damaged(int value)
     {
         _hp -= value;
 
-        if (_hp < 1)
-        {
-            DestroyBody();
-        }
+        if (_hp >= 1)
+            return false;
+        
+        DestroyBody();
+        return true;
+
     }
 
     public Vector3 GetPosition()
@@ -61,7 +63,7 @@ public interface ICube
         
     void DestroyBody();
 
-    void Damaged(int value);
+    bool Damaged(int value);
 
     Vector3 GetPosition();
 }
