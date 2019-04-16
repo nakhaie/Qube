@@ -29,6 +29,18 @@ public class Cube : MonoBehaviour, ICube
 
         HasActive = true;
     }
+    
+    public void Init(string unitName, Vector3 pos, int hp, Material material, Color cubeColor)
+    {
+        _hp = hp;
+        _renderer.material = material;
+        _renderer.material.color = cubeColor;
+        name = unitName;
+
+        transform.position = pos;
+
+        HasActive = true;
+    }
 
     public void DestroyBody()
     {
@@ -60,6 +72,8 @@ public interface ICube
     bool HasEnabled { get; set; }
     
     void Init(string unitName, Vector3 pos, int hp, Material material);
+
+    void Init(string unitName, Vector3 pos, int hp, Material material, Color cubeColor);
         
     void DestroyBody();
 
