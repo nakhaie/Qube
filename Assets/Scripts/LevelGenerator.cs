@@ -10,7 +10,7 @@ public class LevelGenerator : MonoBehaviour
     }
 
     [SerializeField] private GameObject _cubePrefab;
-    [SerializeField] private Transform _groundCollider;
+    [SerializeField] private Transform  _groundCollider;
     [SerializeField] private int        _basicSize = 2;
     [SerializeField] private Vector2    _cageDistance;
     [SerializeField] private float      _cameraDistance = 1;
