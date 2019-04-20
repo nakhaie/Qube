@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -21,6 +22,9 @@ public class PlayerController : MonoBehaviour
     
     [Header("Linear")]
     [SerializeField] private int _linearRange = 2;
+    
+    [Header("Cutter")]
+    [SerializeField] private int _cutterRange = 2;
 
     private Camera       _camera;
     private float        _rayDistance;
@@ -28,6 +32,7 @@ public class PlayerController : MonoBehaviour
     private float        _curAreaTime;
     private bool         _firstTouch;
     private Vector3      _forwardEdge;
+    private Vector3      _lastPoint;
     private ICube        _selectedCube;
     private ETouchEffect _touchEffect;
     
@@ -107,20 +112,7 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log("Hold: " + _touchEffect);
             
-            switch (_touchEffect)
-            {
-                case ETouchEffect.OnRelease:
-
-                    
-                    
-                    break;
-                
-                case ETouchEffect.OnHold:
-
-                    Hold(_selectedCube);
-                    
-                    break;
-            }
+            Hold(_selectedCube);
         }
     }
 
@@ -137,6 +129,10 @@ public class PlayerController : MonoBehaviour
                 return ETouchEffect.None;
 
             case EWeaponType.Cutter:
+                _lastPoint = cube.GetPosition();
+                
+                GizmoCenter = cube.GetPosition();
+                GizmoSize = cube.GetPosition();
                 
                 return ETouchEffect.OnRelease;
 
@@ -179,6 +175,20 @@ public class PlayerController : MonoBehaviour
         {
             case EWeaponType.Cutter:
 
+                if (_lastPoint == selectedCube.GetPosition())
+                {
+                    Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
+                
+                    if (Physics.Raycast(ray, out var hit, _rayDistance, _touchMask))
+                    {
+                        if (Vector3.Distance(_lastPoint, hit.point) > 1)
+                        {
+                            _lastPoint = hit.point;
+                            GizmoSize  = _lastPoint;
+                        }
+                    }
+                }
+
                 break;
 
             case EWeaponType.Area:
@@ -210,6 +220,45 @@ public class PlayerController : MonoBehaviour
 
     private void CutterAttack(ICube cube)
     {
+        if (cube.GetPosition().y < _forwardEdge.y)
+        {
+            if (cube.GetPosition().x < _forwardEdge.x)
+            {
+                
+            }
+            else
+            {
+                
+            }
+        }
+        else
+        {
+            _lastPoint.y = cube.GetPosition().y;
+        }
+
+        Vector3 dir = _lastPoint - cube.GetPosition();
+
+        GizmoCenter = cube.GetPosition();
+        GizmoSize = _lastPoint;
+        
+        var distance  = dir.magnitude;
+        var direction = dir / distance;
+
+        _config.CallAttackCubeEvent(cube, 1);
+        
+        Ray ray = new Ray(cube.GetPosition(), direction);
+
+        var hits = Physics.RaycastAll(ray, _cutterRange, _layerMask);
+        
+        if (hits.Length > 0)
+        {
+            foreach (var hit in hits)
+            {
+                cube = hit.transform.GetComponent<ICube>();
+                
+                _config.CallAttackCubeEvent(cube, 1);
+            }
+        }
         
     }
     
@@ -321,6 +370,18 @@ public class PlayerController : MonoBehaviour
                 break;
             
             case EWeaponType.Cutter:
+
+                GizmoSize.x = GizmoCenter.x;
+                
+                Vector3 dir = GizmoSize - GizmoCenter;
+                
+                var distance  = dir.magnitude;
+                var direction = dir / distance;
+
+                direction *= _cutterRange;
+                
+                Gizmos.DrawRay(GizmoCenter, direction);
+                
                 break;
             
             case EWeaponType.Area:
