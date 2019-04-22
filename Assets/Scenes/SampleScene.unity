@@ -428,7 +428,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Toggle+ToggleEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
-  m_IsOn: 1
+  m_IsOn: 0
 --- !u!1 &154838919
 GameObject:
   m_ObjectHideFlags: 0
@@ -2248,6 +2248,7 @@ MonoBehaviour:
   _areaRange: 8
   _areaTime: 1
   _linearRange: 4
+  _cutterRange: 10
 --- !u!1 &2039505655
 GameObject:
   m_ObjectHideFlags: 0
@@ -2370,4 +2371,4 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Toggle+ToggleEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
-  m_IsOn: 0
+  m_IsOn: 1

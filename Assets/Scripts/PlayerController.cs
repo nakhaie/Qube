@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
@@ -61,6 +62,11 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
+        
         if (Input.GetMouseButtonDown(0) && !_firstTouch)
         {
             _firstTouch = true;
@@ -86,7 +92,7 @@ public class PlayerController : MonoBehaviour
                 }
             }
             
-            Debug.Log("GetMouseButtonDown: " + _touchEffect);
+            //Debug.Log("GetMouseButtonDown: " + _touchEffect);
         }
         else if (Input.GetMouseButtonUp(0) && Input.touchCount < 1)
         {
@@ -110,9 +116,21 @@ public class PlayerController : MonoBehaviour
         }
         else if(Input.GetMouseButton(0) && _firstTouch)
         {
-            Debug.Log("Hold: " + _touchEffect);
+            //Debug.Log("Hold: " + _touchEffect);
             
-            Hold(_selectedCube);
+            switch (_touchEffect)
+            {
+                case ETouchEffect.OnRelease:
+
+                    Hold(_selectedCube);
+                    
+                    break;
+                case ETouchEffect.OnHold:
+
+                    Hold(_selectedCube);
+                    
+                    break;
+            }
         }
     }
 
@@ -175,18 +193,12 @@ public class PlayerController : MonoBehaviour
         {
             case EWeaponType.Cutter:
 
-                if (_lastPoint == selectedCube.GetPosition())
-                {
-                    Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
+                Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
                 
-                    if (Physics.Raycast(ray, out var hit, _rayDistance, _touchMask))
-                    {
-                        if (Vector3.Distance(_lastPoint, hit.point) > 1)
-                        {
-                            _lastPoint = hit.point;
-                            GizmoSize  = _lastPoint;
-                        }
-                    }
+                if (Physics.Raycast(ray, out var hit, _rayDistance, _touchMask))
+                {
+                    _lastPoint = hit.point;
+                    GizmoSize  = _lastPoint;
                 }
 
                 break;
@@ -220,31 +232,89 @@ public class PlayerController : MonoBehaviour
 
     private void CutterAttack(ICube cube)
     {
-        if (cube.GetPosition().y < _forwardEdge.y)
+        if(cube.GetPosition().y < _forwardEdge.y)
         {
             if (cube.GetPosition().x < _forwardEdge.x)
             {
-                
+                _lastPoint.z = cube.GetPosition().z;
+            }
+            else if(cube.GetPosition().z < _forwardEdge.z)
+            {
+                _lastPoint.x = cube.GetPosition().x;
             }
             else
             {
-                
+                if(Math.Abs(_lastPoint.x - _forwardEdge.x) <= 0.5f)
+                {
+                    _lastPoint.x = cube.GetPosition().x;
+                }
+            
+                if(Math.Abs(_lastPoint.z - _forwardEdge.z) <= 0.5f)
+                {
+                    _lastPoint.z = cube.GetPosition().z;
+                }
             }
         }
         else
         {
-            _lastPoint.y = cube.GetPosition().y;
+            if(cube.GetPosition() == _forwardEdge)
+            {
+                if (Math.Abs(_lastPoint.y - _forwardEdge.y) <= 0.5f)
+                {
+                    _lastPoint.y = cube.GetPosition().y;
+                }
+                else
+                {
+                    if(Math.Abs(_lastPoint.z - _forwardEdge.z) <= 0.5f)
+                    {
+                        _lastPoint.z = cube.GetPosition().z;
+                    }
+                    
+                    if(Math.Abs(_lastPoint.x - _forwardEdge.x) <= 0.5f)
+                    {
+                        _lastPoint.x = cube.GetPosition().x;
+                    }
+                }
+            }
+            else if(Math.Abs(cube.GetPosition().x - _forwardEdge.x) < 0.5f)
+            {
+                if (Math.Abs(_lastPoint.x - _forwardEdge.x) <= 0.5f)
+                {
+                    _lastPoint.x = cube.GetPosition().x;
+                }
+                
+                if(Math.Abs(_lastPoint.y - _forwardEdge.y) <= 0.5f)
+                {
+                    _lastPoint.y = cube.GetPosition().y;
+                }
+            }
+            else if(Math.Abs(cube.GetPosition().z - _forwardEdge.z) < 0.5f)
+            {
+                if (Math.Abs(_lastPoint.z - _forwardEdge.z) <= 0.5f)
+                {
+                    _lastPoint.z = cube.GetPosition().z;
+                }
+                
+                if(Math.Abs(_lastPoint.y - _forwardEdge.y) <= 0.5f)
+                {
+                    _lastPoint.y = cube.GetPosition().y;
+                }
+            }
+            else
+            {
+                _lastPoint.y = cube.GetPosition().y;
+            }
         }
 
         Vector3 dir = _lastPoint - cube.GetPosition();
 
-        GizmoCenter = cube.GetPosition();
-        GizmoSize = _lastPoint;
-        
         var distance  = dir.magnitude;
         var direction = dir / distance;
 
         _config.CallAttackCubeEvent(cube, 1);
+        
+        GizmoCenter = cube.GetPosition();
+        GizmoSize   = direction;
         
         Ray ray = new Ray(cube.GetPosition(), direction);
 
@@ -371,14 +441,16 @@ public class PlayerController : MonoBehaviour
             
             case EWeaponType.Cutter:
 
-                GizmoSize.x = GizmoCenter.x;
+                /*GizmoSize.x = GizmoCenter.x;
                 
                 Vector3 dir = GizmoSize - GizmoCenter;
                 
                 var distance  = dir.magnitude;
                 var direction = dir / distance;
 
-                direction *= _cutterRange;
+                direction *= _cutterRange;*/
+                
+                var direction = GizmoSize * _cutterRange;
                 
                 Gizmos.DrawRay(GizmoCenter, direction);
                 
