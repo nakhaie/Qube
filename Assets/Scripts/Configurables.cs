@@ -8,6 +8,7 @@ public class Configurables
     private static Configurables _instance;
 
     public delegate void DelAttackCube(ICube target, int value);
+    public delegate void DelDestroyCube(ICube target);
     public delegate void DelFloatValue(float size);
     public delegate void DelForwardEdge(Vector3 pos);
     public delegate void DelChangeWeapon(int index);
@@ -19,13 +20,21 @@ public class Configurables
     public event DelChangeWeapon EvnChangeWeapon;
     public event DelFloatValue EvnAreaTimer;
     public event DelUseWeapon EvnUseWeapon;
+    public event DelDestroyCube EvnDestroyCube;
     
     public const int ReverseFactor     = -1;
     public const int ProgressionFactor = 2;
+    public const float HalfCubeSize = 0.5f;
+    public const float CutterFactor = 0.25f;
     
     public void CallAttackCubeEvent(ICube target, int value)
     {
         EvnAttackCube?.Invoke(target, value);
+    }
+    
+    public void CallDestroyCubeEvent(ICube target)
+    {
+        EvnDestroyCube?.Invoke(target);
     }
 
     public void CallCageChangeSizeEvent(float size)

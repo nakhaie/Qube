@@ -26,6 +26,7 @@ public class PlayerController : MonoBehaviour
     
     [Header("Cutter")]
     [SerializeField] private int _cutterRange = 2;
+    [SerializeField] private int _cutterRadius = 1;
 
     private Camera       _camera;
     private float        _rayDistance;
@@ -83,11 +84,19 @@ public class PlayerController : MonoBehaviour
                 else
                 {
                     Collider[] targetFound = new Collider[1];
-                
+                    
                     if (Physics.OverlapSphereNonAlloc(hit.point,1.0f, targetFound,_layerMask) > 0)
                     {
                         _selectedCube = targetFound[0].GetComponent<ICube>();
                         _touchEffect = Fire(_selectedCube);
+                    }
+                    else
+                    {
+                        if (_weapon != EWeaponType.Normal)
+                        {
+                            _selectedCube = GetSimpleCube(hit.point);
+                            _touchEffect  = Fire(_selectedCube);
+                        }
                     }
                 }
             }
@@ -116,8 +125,6 @@ public class PlayerController : MonoBehaviour
         }
         else if(Input.GetMouseButton(0) && _firstTouch)
         {
-            //Debug.Log("Hold: " + _touchEffect);
-            
             switch (_touchEffect)
             {
                 case ETouchEffect.OnRelease:
@@ -166,7 +173,7 @@ public class PlayerController : MonoBehaviour
                 return ETouchEffect.OnHold;
 
             case EWeaponType.Linear:
-                LinearAttack(cube);
+                LinearAttack(cube.GetPosition());
                 return ETouchEffect.None;
         }
 
@@ -178,7 +185,7 @@ public class PlayerController : MonoBehaviour
         switch (_weapon)
         {
             case EWeaponType.Cutter:
-                CutterAttack(selectedCube);
+                CutterAttack(selectedCube.GetPosition());
                 break;
 
             case EWeaponType.Area:
@@ -214,7 +221,7 @@ public class PlayerController : MonoBehaviour
                 
                 if (_curAreaTime >= _areaTime)
                 {
-                    AreaAttack(selectedCube);
+                    AreaAttack(selectedCube.GetPosition());
                     AreaDismiss();
                 }
                 
@@ -230,101 +237,101 @@ public class PlayerController : MonoBehaviour
         GizmoSize   = Vector3.one;
     }
 
-    private void CutterAttack(ICube cube)
+    private void CutterAttack(Vector3 start)
     {
-        if(cube.GetPosition().y < _forwardEdge.y)
+        if(start.y < _forwardEdge.y)
         {
-            if (cube.GetPosition().x < _forwardEdge.x)
+            if (start.x < _forwardEdge.x)
             {
-                _lastPoint.z = cube.GetPosition().z;
+                _lastPoint.z = start.z;
             }
-            else if(cube.GetPosition().z < _forwardEdge.z)
+            else if(start.z < _forwardEdge.z)
             {
-                _lastPoint.x = cube.GetPosition().x;
+                _lastPoint.x = start.x;
             }
             else
             {
-                if(Math.Abs(_lastPoint.x - _forwardEdge.x) <= 0.5f)
+                if(Math.Abs(_lastPoint.x - _forwardEdge.x) <= Configurables.HalfCubeSize)
                 {
-                    _lastPoint.x = cube.GetPosition().x;
+                    _lastPoint.x = start.x;
                 }
             
-                if(Math.Abs(_lastPoint.z - _forwardEdge.z) <= 0.5f)
+                if(Math.Abs(_lastPoint.z - _forwardEdge.z) <= Configurables.HalfCubeSize)
                 {
-                    _lastPoint.z = cube.GetPosition().z;
+                    _lastPoint.z = start.z;
                 }
             }
         }
         else
         {
-            if(cube.GetPosition() == _forwardEdge)
+            if(start == _forwardEdge)
             {
-                if (Math.Abs(_lastPoint.y - _forwardEdge.y) <= 0.5f)
+                if (Math.Abs(_lastPoint.y - _forwardEdge.y) <= Configurables.HalfCubeSize)
                 {
-                    _lastPoint.y = cube.GetPosition().y;
+                    _lastPoint.y = start.y;
                 }
                 else
                 {
-                    if(Math.Abs(_lastPoint.z - _forwardEdge.z) <= 0.5f)
+                    if(Math.Abs(_lastPoint.z - _forwardEdge.z) <= Configurables.HalfCubeSize)
                     {
-                        _lastPoint.z = cube.GetPosition().z;
+                        _lastPoint.z = start.z;
                     }
                     
-                    if(Math.Abs(_lastPoint.x - _forwardEdge.x) <= 0.5f)
+                    if(Math.Abs(_lastPoint.x - _forwardEdge.x) <= Configurables.HalfCubeSize)
                     {
-                        _lastPoint.x = cube.GetPosition().x;
+                        _lastPoint.x = start.x;
                     }
                 }
             }
-            else if(Math.Abs(cube.GetPosition().x - _forwardEdge.x) < 0.5f)
+            else if(Math.Abs(start.x - _forwardEdge.x) < Configurables.HalfCubeSize)
             {
-                if (Math.Abs(_lastPoint.x - _forwardEdge.x) <= 0.5f)
+                if (Math.Abs(_lastPoint.x - _forwardEdge.x) <= Configurables.HalfCubeSize)
                 {
-                    _lastPoint.x = cube.GetPosition().x;
+                    _lastPoint.x = start.x;
                 }
                 
-                if(Math.Abs(_lastPoint.y - _forwardEdge.y) <= 0.5f)
+                if(Math.Abs(_lastPoint.y - _forwardEdge.y) <= Configurables.HalfCubeSize)
                 {
-                    _lastPoint.y = cube.GetPosition().y;
+                    _lastPoint.y = start.y;
                 }
             }
-            else if(Math.Abs(cube.GetPosition().z - _forwardEdge.z) < 0.5f)
+            else if(Math.Abs(start.z - _forwardEdge.z) < Configurables.HalfCubeSize)
             {
-                if (Math.Abs(_lastPoint.z - _forwardEdge.z) <= 0.5f)
+                if (Math.Abs(_lastPoint.z - _forwardEdge.z) <= Configurables.HalfCubeSize)
                 {
-                    _lastPoint.z = cube.GetPosition().z;
+                    _lastPoint.z = start.z;
                 }
                 
-                if(Math.Abs(_lastPoint.y - _forwardEdge.y) <= 0.5f)
+                if(Math.Abs(_lastPoint.y - _forwardEdge.y) <= Configurables.HalfCubeSize)
                 {
-                    _lastPoint.y = cube.GetPosition().y;
+                    _lastPoint.y = start.y;
                 }
             }
             else
             {
-                _lastPoint.y = cube.GetPosition().y;
+                _lastPoint.y = start.y;
             }
         }
 
-        Vector3 dir = _lastPoint - cube.GetPosition();
+        Vector3 dir = _lastPoint - start;
 
         var distance  = dir.magnitude;
         var direction = dir / distance;
 
-        _config.CallAttackCubeEvent(cube, 1);
-        
-        GizmoCenter = cube.GetPosition();
+        GizmoCenter = start;
         GizmoSize   = direction;
-        
-        Ray ray = new Ray(cube.GetPosition(), direction);
 
-        var hits = Physics.RaycastAll(ray, _cutterRange, _layerMask);
+        Ray ray = new Ray(start, direction);
+
+        var hits = Physics.SphereCastAll(ray, _cutterRadius * Configurables.CutterFactor,
+                                         _cutterRange - 1, _layerMask);
+        //var hits = Physics.RaycastAll(ray, _cutterRange - 1, _layerMask);
         
         if (hits.Length > 0)
         {
             foreach (var hit in hits)
             {
-                cube = hit.transform.GetComponent<ICube>();
+                ICube cube = hit.transform.GetComponent<ICube>();
                 
                 _config.CallAttackCubeEvent(cube, 1);
             }
@@ -332,63 +339,63 @@ public class PlayerController : MonoBehaviour
         
     }
     
-    private void AreaAttack(ICube cube)
+    private void AreaAttack(Vector3 center)
     {
-        Collider[] units = Physics.OverlapSphere(cube.GetPosition(), _areaRange, _layerMask);
+        Collider[] units = Physics.OverlapSphere(center, _areaRange, _layerMask);
        
         foreach (var unit in units)
         {
-            cube = unit.transform.GetComponent<ICube>();
+            ICube cube = unit.transform.GetComponent<ICube>();
 
             _config.CallAttackCubeEvent(cube, 1);
         }
     }
 
-    private void LinearAttack(ICube cube)
+    private void LinearAttack(Vector3 center)
     {
         const float extentsFactor = 2.0f;
+        Vector3 offsetSize = Vector3.one / 10;
                 
-        Vector3 startPoint = (Vector3.one / extentsFactor) - (Vector3.one / 10);
+        Vector3 halfExtents = (Vector3.one / extentsFactor) - offsetSize;
                 
         float linearScale = (_linearRange / extentsFactor) - 0.05f;
                 
-        if (cube.GetPosition().y < _forwardEdge.y)
+        if (center.y < _forwardEdge.y)
         {
-            startPoint.y = _curCageScale;
+            halfExtents.y = _curCageScale;
 
-            if (cube.GetPosition().x < cube.GetPosition().z)
+            if (center.x < center.z)
             {
-                startPoint.x = linearScale;
+                halfExtents.x = linearScale;
             }
             else
             {
-                startPoint.z = linearScale;
+                halfExtents.z = linearScale;
             }
         }
         else
         {
-            if (cube.GetPosition().x > cube.GetPosition().z)
+            if (center.x > center.z)
             {
-                startPoint.x = _curCageScale;
-                startPoint.z = linearScale;
+                halfExtents.x = _curCageScale;
+                halfExtents.z = linearScale;
             }
             else
             {
-                startPoint.z = _curCageScale;
-                startPoint.x = linearScale;
+                halfExtents.z = _curCageScale;
+                halfExtents.x = linearScale;
             }
         }
 
 
-        GizmoCenter = cube.GetPosition();
-        GizmoSize   = startPoint * 2;
+        GizmoCenter = center;
+        GizmoSize   = halfExtents * 2;
                 
-        Collider[] hits = Physics.OverlapBox(cube.GetPosition(), startPoint,
-                                             Quaternion.identity, _layerMask);
+        Collider[] hits = Physics.OverlapBox(center, halfExtents, Quaternion.identity, _layerMask);
 
         foreach (Collider part in hits)
         {
-            cube = part.transform.GetComponent<ICube>();
+            ICube cube = part.transform.GetComponent<ICube>();
 
             _config.CallAttackCubeEvent(cube, 1);
         }
@@ -400,6 +407,15 @@ public class PlayerController : MonoBehaviour
         _explosionArea.gameObject.SetActive(false);
         _config.CallAreaTimeEvent(_curAreaTime);
         _touchEffect = ETouchEffect.None;
+    }
+
+    private ICube GetSimpleCube(Vector3 point)
+    {
+        point.x = Mathf.CeilToInt(point.x);
+        point.y = Mathf.CeilToInt(point.y);
+        point.z = Mathf.CeilToInt(point.z);
+        
+        return new SimpleCube(point);
     }
     
 #endregion
@@ -441,18 +457,23 @@ public class PlayerController : MonoBehaviour
             
             case EWeaponType.Cutter:
 
-                /*GizmoSize.x = GizmoCenter.x;
+                float rang = _cutterRange - 1;
                 
-                Vector3 dir = GizmoSize - GizmoCenter;
-                
-                var distance  = dir.magnitude;
-                var direction = dir / distance;
-
-                direction *= _cutterRange;*/
-                
-                var direction = GizmoSize * _cutterRange;
+                var direction = GizmoSize * rang;
                 
                 Gizmos.DrawRay(GizmoCenter, direction);
+
+                rang *= 2;
+                direction /= rang;
+                
+                for (int i = 0; i < rang; i++)
+                {
+                    Vector3 pos = GizmoCenter + (direction * i);
+                    Gizmos.DrawWireSphere(pos, _cutterRadius * Configurables.CutterFactor);
+                }
+                
+                Gizmos.DrawWireSphere(GizmoCenter + direction * rang, _cutterRadius * Configurables.CutterFactor);
+                
                 
                 break;
             
@@ -468,6 +489,15 @@ public class PlayerController : MonoBehaviour
             default:
                 throw new ArgumentOutOfRangeException();
         }
+        
+        Gizmos.color = Color.white;
+
+        if (_selectedCube != null)
+        {
+            Gizmos.DrawCube(_selectedCube.GetPosition(), Vector3.one);
+        }
+        
+        
 
         
     }

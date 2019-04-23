@@ -52,6 +52,7 @@ public class LevelGenerator : MonoBehaviour
         _colorClamp = 1.0f / _cageLayers.Length;
 
         _config.EvnAttackCube += OnAttackCube;
+        _config.EvnDestroyCube += OnDestroyCube;
     }
 
     private void Start()
@@ -325,9 +326,7 @@ public class LevelGenerator : MonoBehaviour
         if (!cube.Damaged(damage))
             return;
 
-        _cubesPool.Enqueue(cube);
-
-        _curTotalCubes--;
+        _config.CallDestroyCubeEvent(cube);
     }
 
 #endregion

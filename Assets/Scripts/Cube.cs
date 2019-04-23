@@ -56,12 +56,64 @@ public class Cube : MonoBehaviour, ICube
         
         DestroyBody();
         return true;
-
     }
 
     public Vector3 GetPosition()
     {
         return transform.position;
+    }
+}
+
+public struct SimpleCube : ICube
+{
+    public bool HasActive
+    {
+        get => false;
+        set
+        {
+            
+        }
+    }
+
+    public bool HasEnabled
+    {
+        get => false;
+        set
+        {
+            
+        }
+    }
+
+    private Vector3 _pos;
+
+    public SimpleCube(Vector3 pos)
+    {
+        _pos = pos;
+    }
+    
+    public void Init(string unitName, Vector3 pos, int hp, Material material)
+    {
+        _pos = pos;
+    }
+
+    public void Init(string unitName, Vector3 pos, int hp, Material material, Color cubeColor)
+    {
+        _pos = pos;
+    }
+
+    public void DestroyBody()
+    {
+        
+    }
+
+    public bool Damaged(int value)
+    {
+        return false;
+    }
+
+    public Vector3 GetPosition()
+    {
+        return _pos;
     }
 }
 
