@@ -1,30 +1,20 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class LevelGenerator : MonoBehaviour
 {
-    private enum ELayerGraphicType
-    {
-        Material = 0,
-        Gradient = 1
-    }
-
     [SerializeField] private GameObject _cubePrefab;
     [SerializeField] private Transform  _groundCollider;
-    [SerializeField] private int        _basicSize = 2;
-    [SerializeField] private Vector2    _cageDistance;
-    [SerializeField] private float      _cameraDistance = 1;
 
-    [Header("Cage Layers")]
-    [SerializeField] private ELayerGraphicType _graphicType;
-    [SerializeField] private CageLayerProperty _cageLayers;
+    [SerializeField] private LevelProperty _levelProperty;
 
     private readonly Dictionary<int, Vector3Int[]> _cubesInLayers = new Dictionary<int, Vector3Int[]>();
     private readonly Queue<ICube>                  _cubesPool     = new Queue<ICube>();
 
     private bool _win;
 
-    private float _screenScale => _cageDistance.x + _screenScaleFactor * _cubesInLayers.Keys.Count;
+    private float _screenScale => _levelProperty.CageDistance.x + _screenScaleFactor * _cubesInLayers.Keys.Count;
     private float _screenScaleFactor;
     private float _cameraZoom;
     private float _colorClamp;
@@ -46,23 +36,25 @@ public class LevelGenerator : MonoBehaviour
         _screenRatio   = new Vector2(0.0f, _camera.orthographicSize * 2);
         _screenRatio.x = Screen.width * _screenRatio.y / Screen.height;
 
-        _screenScaleFactor =  _cageDistance.y - _cageDistance.x;
-        _screenScaleFactor /= _cageLayers.Length;
+        _screenScaleFactor = _levelProperty.CageDistance.y - _levelProperty.CageDistance.x;
+        _screenScaleFactor /= _levelProperty.CageLayers.Length;
 
-        _colorClamp = 1.0f / _cageLayers.Length;
+        _colorClamp = 1.0f / (_levelProperty.CageLayers.Length - 1);
 
         _config.EvnAttackCube += OnAttackCube;
         _config.EvnDestroyCube += OnDestroyCube;
+
+        Application.targetFrameRate = 30;
     }
 
     private void Start()
     {
-        CreatLayers(_cageLayers.Length, _basicSize);
+        CreatLayers(_levelProperty.CageLayers.Length, _levelProperty.BasicSize);
 
-        _curLayer = _cageLayers.Length - 1;
+        _curLayer = _levelProperty.CageLayers.Length - 1;
         int totalCubes;
 
-        if (_cageLayers.Length > 1)
+        if (_levelProperty.CageLayers.Length > 1)
         {
             totalCubes = _cubesInLayers[_curLayer].Length + _cubesInLayers[_curLayer - 1].Length;
         }
@@ -77,18 +69,19 @@ public class LevelGenerator : MonoBehaviour
 
         _curTotalCubes = _cubesInLayers[_curLayer].Length;
 
-        if (_cageLayers.Length > 1)
+        if (_levelProperty.CageLayers.Length > 1)
         {
             _backLayerCubes = InstantiateLayer(_curLayer - 1, false);
         }
 
-        SetupCamera(_camera, _screenRatio, _cageLayers.Length, _basicSize, _screenScale,
-                    _cameraDistance);
+        SetupCamera(_camera, _screenRatio, _levelProperty.CageLayers.Length, _levelProperty.BasicSize,
+                    _screenScale, _levelProperty.CameraDistance);
 
         _cameraZoom = _camera.orthographicSize;
         _curLayer   = _cubesInLayers.Keys.Count - 1;
-        MakeGroundCollider(_curLayer, _basicSize);
-        _config.CallCageChangeSizeEvent(GetCageSize(_cubesInLayers.Keys.Count, _basicSize));
+        MakeGroundCollider(_curLayer, _levelProperty.BasicSize);
+        _config.CallCageChangeSizeEvent(GetCageSize(_cubesInLayers.Keys.Count,
+                                                    _levelProperty.BasicSize));
 
         _win = false;
     }
@@ -102,8 +95,9 @@ public class LevelGenerator : MonoBehaviour
         {
             _cubesInLayers.Remove(_curLayer);
             _curLayer--;
-            MakeGroundCollider(_curLayer, _basicSize);
-            _config.CallCageChangeSizeEvent(GetCageSize(_cubesInLayers.Keys.Count, _basicSize));
+            MakeGroundCollider(_curLayer, _levelProperty.BasicSize);
+            _config.CallCageChangeSizeEvent(GetCageSize(_cubesInLayers.Keys.Count,
+                                                        _levelProperty.BasicSize));
 
             if (_cubesInLayers.Count < 1)
             {
@@ -124,7 +118,7 @@ public class LevelGenerator : MonoBehaviour
 
             _backLayerCubes = _curLayer > 0 ? InstantiateLayer(_curLayer - 1, false) : null;
 
-            _cameraZoom = ZoomCamera(_screenRatio, _cubesInLayers.Keys.Count, _basicSize,
+            _cameraZoom = ZoomCamera(_screenRatio, _cubesInLayers.Keys.Count,_levelProperty.BasicSize,
                                      _screenScale);
         }
         else if (Mathf.Abs(_cameraZoom - _camera.orthographicSize) > 0.1f)
@@ -219,25 +213,26 @@ public class LevelGenerator : MonoBehaviour
         {
             ICube cube = _cubesPool.Dequeue();
 
-            switch (_graphicType)
+            switch (_levelProperty.GraphicType)
             {
                 case ELayerGraphicType.Material:
                     
-                    Material cubeMaterial = _cageLayers[layerIndex];
-
+                    Material cubeMaterial = _levelProperty.CageLayers[layerIndex];
+                    
                     cube.Init($"Unit_{layerIndex}_{i}", _cubesInLayers[layerIndex][i],
-                              _cageLayers[layerIndex,0], cubeMaterial);
+                              _levelProperty.CageLayers[layerIndex,0], cubeMaterial);
 
                     break;
 
                 case ELayerGraphicType.Gradient:
 
-                    Color cubeColor = Color.LerpUnclamped(_cageLayers.CageGradient.StartColor,
-                                                          _cageLayers.CageGradient.EndColor,
+                    Color cubeColor = Color.LerpUnclamped(_levelProperty.CageLayers.CageGradient.StartColor,
+                                                          _levelProperty.CageLayers.CageGradient.EndColor,
                                                           _colorClamp * layerIndex);
 
                     cube.Init($"Unit_{layerIndex}_{i}", _cubesInLayers[layerIndex][i],
-                              _cageLayers[layerIndex,0], _cageLayers.CageMaterials.DefaultMaterial, cubeColor);
+                              _levelProperty.CageLayers[layerIndex,0],
+                              _levelProperty.CageLayers.CageMaterials.DefaultMaterial, cubeColor);
 
                     break;
             }
@@ -330,6 +325,25 @@ public class LevelGenerator : MonoBehaviour
     }
 
 #endregion
+}
+
+public enum ELayerGraphicType
+{
+    Material = 0,
+    Gradient = 1
+}
+
+[System.Serializable]
+public struct LevelProperty
+{
+    [Header("Cage Size")]
+    public int     BasicSize;
+    public Vector2 CageDistance;
+    public float   CameraDistance;
+
+    [Header("Cage Layers")]
+    public ELayerGraphicType GraphicType;
+    public CageLayerProperty CageLayers;
 }
 
 [System.Serializable]

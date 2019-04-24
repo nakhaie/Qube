@@ -103,7 +103,7 @@ public class PlayerController : MonoBehaviour
             
             //Debug.Log("GetMouseButtonDown: " + _touchEffect);
         }
-        else if (Input.GetMouseButtonUp(0) && Input.touchCount < 1)
+        else if (Input.GetMouseButtonUp(0) && Input.touchCount < 2)
         {
             _firstTouch = false;
 

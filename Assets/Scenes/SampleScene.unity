@@ -2201,30 +2201,25 @@ MonoBehaviour:
   _cubePrefab: {fileID: 6706149982896232568, guid: 185259ce0fa4173489abdac0d9fadfa4,
     type: 3}
   _groundCollider: {fileID: 1949088288}
-  _basicSize: 2
-  _cageDistance: {x: 2, y: 10}
-  _cameraDistance: 5
-  _graphicType: 0
-  _cageLayers:
-    CubesHp: 0100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
-    CageGradient:
-      StartColor: {r: 1, g: 0, b: 0, a: 1}
-      EndColor: {r: 0, g: 0, b: 1, a: 1}
-    CageMaterials:
-      DefaultMaterial: {fileID: 2100000, guid: 81a2e5499237b584a8ad93a6d2aebf9e, type: 2}
-      CubeMaterial:
-      - {fileID: 2100000, guid: 3059cad89ba412040884b0554a85620f, type: 2}
-      - {fileID: 2100000, guid: e3b3b90936230e6419a6e1ae25306f1b, type: 2}
-      - {fileID: 2100000, guid: 26abc5e112d348247ae9fcfa97aaa572, type: 2}
-      - {fileID: 2100000, guid: 81a2e5499237b584a8ad93a6d2aebf9e, type: 2}
-      - {fileID: 2100000, guid: 3059cad89ba412040884b0554a85620f, type: 2}
-      - {fileID: 2100000, guid: e3b3b90936230e6419a6e1ae25306f1b, type: 2}
-      - {fileID: 2100000, guid: 26abc5e112d348247ae9fcfa97aaa572, type: 2}
-      - {fileID: 2100000, guid: 81a2e5499237b584a8ad93a6d2aebf9e, type: 2}
-      - {fileID: 2100000, guid: 3059cad89ba412040884b0554a85620f, type: 2}
-      - {fileID: 2100000, guid: e3b3b90936230e6419a6e1ae25306f1b, type: 2}
-      - {fileID: 2100000, guid: 26abc5e112d348247ae9fcfa97aaa572, type: 2}
-      - {fileID: 2100000, guid: 81a2e5499237b584a8ad93a6d2aebf9e, type: 2}
+  _levelProperty:
+    BasicSize: 2
+    CageDistance: {x: 2, y: 10}
+    CameraDistance: 5
+    GraphicType: 1
+    CageLayers:
+      CubesHp: 0100000001000000010000000100000001000000
+      CageGradient:
+        StartColor: {r: 1, g: 0, b: 0, a: 1}
+        EndColor: {r: 1, g: 1, b: 1, a: 1}
+      CageMaterials:
+        DefaultMaterial: {fileID: 2100000, guid: 81a2e5499237b584a8ad93a6d2aebf9e,
+          type: 2}
+        CubeMaterial:
+        - {fileID: 2100000, guid: 3059cad89ba412040884b0554a85620f, type: 2}
+        - {fileID: 2100000, guid: e3b3b90936230e6419a6e1ae25306f1b, type: 2}
+        - {fileID: 2100000, guid: 26abc5e112d348247ae9fcfa97aaa572, type: 2}
+        - {fileID: 2100000, guid: 81a2e5499237b584a8ad93a6d2aebf9e, type: 2}
+        - {fileID: 2100000, guid: 3059cad89ba412040884b0554a85620f, type: 2}
 --- !u!114 &2015850797
 MonoBehaviour:
   m_ObjectHideFlags: 0
