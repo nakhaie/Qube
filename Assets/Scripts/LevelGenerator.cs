@@ -4,6 +4,7 @@ using UnityEngine.Serialization;
 
 public class LevelGenerator : MonoBehaviour
 {
+    [SerializeField] private Transform _cameraPivot;
     [SerializeField] private GameObject _cubePrefab;
     [SerializeField] private Transform  _groundCollider;
 
@@ -13,16 +14,14 @@ public class LevelGenerator : MonoBehaviour
     private readonly Queue<ICube>                  _cubesPool     = new Queue<ICube>();
 
     private bool _win;
-
-    private float _screenScale => _levelProperty.CageDistance.x + _screenScaleFactor * _cubesInLayers.Keys.Count;
+    
     private float _screenScaleFactor;
-    private float _cameraZoom;
+    private Vector3 _cameraZoom;
     private float _colorClamp;
 
     private int _curLayer;
     private int _curTotalCubes;
 
-    private Vector2 _screenRatio;
     private ICube[] _backLayerCubes;
 
     private Camera        _camera;
@@ -32,9 +31,6 @@ public class LevelGenerator : MonoBehaviour
     {
         _camera = Camera.main;
         _config = Configurables.Instance;
-
-        _screenRatio   = new Vector2(0.0f, _camera.orthographicSize * 2);
-        _screenRatio.x = Screen.width * _screenRatio.y / Screen.height;
 
         _screenScaleFactor = _levelProperty.CageDistance.y - _levelProperty.CageDistance.x;
         _screenScaleFactor /= _levelProperty.CageLayers.Length;
@@ -49,7 +45,7 @@ public class LevelGenerator : MonoBehaviour
 
     private void Start()
     {
-        CreatLayers(_levelProperty.CageLayers.Length, _levelProperty.BasicSize);
+        CreatLayers(_levelProperty.CageLayers.Length);
 
         _curLayer = _levelProperty.CageLayers.Length - 1;
         int totalCubes;
@@ -74,14 +70,14 @@ public class LevelGenerator : MonoBehaviour
             _backLayerCubes = InstantiateLayer(_curLayer - 1, false);
         }
 
-        SetupCamera(_camera, _screenRatio, _levelProperty.CageLayers.Length, _levelProperty.BasicSize,
-                    _screenScale, _levelProperty.CameraDistance);
+        _cameraZoom = ZoomCamera(_levelProperty.CageLayers.Length);
+        _camera.transform.localPosition = _cameraZoom;
 
-        _cameraZoom = _camera.orthographicSize;
+        _cameraPivot.eulerAngles = new Vector3(45,45,0);
+        
         _curLayer   = _cubesInLayers.Keys.Count - 1;
-        MakeGroundCollider(_curLayer, _levelProperty.BasicSize);
-        _config.CallCageChangeSizeEvent(GetCageSize(_cubesInLayers.Keys.Count,
-                                                    _levelProperty.BasicSize));
+        MakeGroundCollider(_curLayer);
+        _config.CallCageChangeSizeEvent(GetCageSize(_cubesInLayers.Keys.Count));
 
         _win = false;
     }
@@ -95,9 +91,8 @@ public class LevelGenerator : MonoBehaviour
         {
             _cubesInLayers.Remove(_curLayer);
             _curLayer--;
-            MakeGroundCollider(_curLayer, _levelProperty.BasicSize);
-            _config.CallCageChangeSizeEvent(GetCageSize(_cubesInLayers.Keys.Count,
-                                                        _levelProperty.BasicSize));
+            MakeGroundCollider(_curLayer);
+            _config.CallCageChangeSizeEvent(GetCageSize(_cubesInLayers.Keys.Count));
 
             if (_cubesInLayers.Count < 1)
             {
@@ -118,63 +113,44 @@ public class LevelGenerator : MonoBehaviour
 
             _backLayerCubes = _curLayer > 0 ? InstantiateLayer(_curLayer - 1, false) : null;
 
-            _cameraZoom = ZoomCamera(_screenRatio, _cubesInLayers.Keys.Count,_levelProperty.BasicSize,
-                                     _screenScale);
+            _cameraZoom = ZoomCamera(_cubesInLayers.Keys.Count);
         }
-        else if (Mathf.Abs(_cameraZoom - _camera.orthographicSize) > 0.1f)
+        else if (Vector3.Distance(_cameraZoom,_camera.transform.localPosition) > 0.1f)
         {
-            _camera.orthographicSize = Mathf.Lerp(_camera.orthographicSize, _cameraZoom, Time.deltaTime * 2);
+            _camera.transform.localPosition = Vector3.Lerp(_camera.transform.localPosition, _cameraZoom,
+                                                           Time.deltaTime * 2);
         }
     }
 
 #region Init
 
-    private void CreatLayers(int layerCount, int basicScale)
+    private void CreatLayers(int layerCount)
     {
+        List<Vector3Int> totalLayerPos = new List<Vector3Int>();
+        
         for (int i = 0; i < layerCount; i++)
         {
-            int rowCount = basicScale + (Configurables.ProgressionFactor * i);
-
-            Vector3Int depth = Vector3Int.one * i;
-
-            Vector3Int[] cubesPosList = CalculateLayer(rowCount, depth);
-
-            _cubesInLayers.Add(i, cubesPosList);
-        }
-    }
-
-    private Vector3Int[] CalculateLayer(int layerScale, Vector3Int layerDepth)
-    {
-        List<Vector3Int> result = new List<Vector3Int>();
-
-        for (int j = 0; j < layerScale; j++)
-        {
-            for (int k = 0; k < layerScale; k++)
+            List<Vector3Int> layerPos = new List<Vector3Int>();
+            
+            for (int x = -i; x <= i; x++)
             {
-                Vector3Int pos = (new Vector3Int(j, k, 0) * Configurables.ReverseFactor) + layerDepth;
-
-                if (!result.Contains(pos))
+                for (int y = -i; y <= i; y++)
                 {
-                    result.Add(pos);
-                }
+                    for (int z = -i; z <= i; z++)
+                    {
+                        Vector3Int pos = new Vector3Int(x, y, z);
 
-                pos = (new Vector3Int(0, j, k) * Configurables.ReverseFactor) + layerDepth;
-
-                if (!result.Contains(pos))
-                {
-                    result.Add(pos);
-                }
-
-                pos = (new Vector3Int(k, 0, j) * Configurables.ReverseFactor) + layerDepth;
-
-                if (!result.Contains(pos))
-                {
-                    result.Add(pos);
+                        if (!totalLayerPos.Contains(pos))
+                        {
+                            layerPos.Add(pos);
+                            totalLayerPos.Add(pos);
+                        }
+                    }
                 }
             }
-        }
 
-        return result.ToArray();
+            _cubesInLayers.Add(i, layerPos.ToArray());
+        }
     }
 
     private void InstantiatePool(int totalCubes)
@@ -187,18 +163,6 @@ public class LevelGenerator : MonoBehaviour
 
             _cubesPool.Enqueue(cube);
         }
-    }
-
-    private void SetupCamera(Camera cameraProperty, Vector2 screenRatio, int layerIndex, int basicScale,
-                                    float cageDistance, float cameraDistance)
-    {
-        Vector3 forwardEdge = Vector3.one * (layerIndex - 1);
-        Vector3 cameraPos   = forwardEdge + (Vector3.one * cameraDistance);
-
-        cameraProperty.transform.position = cameraPos;
-        cameraProperty.transform.LookAt(forwardEdge);
-
-        cameraProperty.orthographicSize = ZoomCamera(screenRatio, layerIndex, basicScale, cageDistance);
     }
 
 #endregion
@@ -245,45 +209,29 @@ public class LevelGenerator : MonoBehaviour
         return result;
     }
 
-    private float ZoomCamera(Vector2 screenRatio, int layerIndex, int basicScale,
-                                    float cageDistance)
+    private Vector3 ZoomCamera(int layerIndex)
     {
-        layerIndex--;
-        basicScale--;
+        Vector3 cameraPos = Vector3.zero;
+        cameraPos.z = _screenScaleFactor * layerIndex * -1;
 
-        Vector3 forwardEdge = Vector3.one * layerIndex;
-        Vector3 rightEdge   = forwardEdge;
-        Vector3 leftEdge    = forwardEdge;
-
-        rightEdge.x = (layerIndex + basicScale) * Configurables.ReverseFactor;
-        leftEdge.z  = (layerIndex + basicScale) * Configurables.ReverseFactor;
-
-        float betweenTwoEdge = Vector3.Distance(rightEdge, leftEdge) + cageDistance;
-        float cameraSize     = (betweenTwoEdge * screenRatio.y) / screenRatio.x;
-
-        cameraSize /= Configurables.ProgressionFactor;
-        
-        _config.CallForwardEdgeEvent(forwardEdge);
-
-        return cameraSize;
+        return cameraPos;
     }
 
-    private float GetCageSize(int layerIndex, int basicScale)
+    private float GetCageSize(int layerIndex)
     {
         layerIndex--;
-        basicScale--;
 
         Vector3 forwardEdge = Vector3.one * layerIndex;
         Vector3 rightEdge   = forwardEdge;
 
-        rightEdge.x = (layerIndex + basicScale) * Configurables.ReverseFactor;
+        rightEdge.x = layerIndex * Configurables.ReverseFactor;
 
         float betweenTwoEdge = Vector3.Distance(rightEdge, forwardEdge);
 
         return betweenTwoEdge;
     }
 
-    private void MakeGroundCollider(int layerIndex, int basicScale)
+    private void MakeGroundCollider(int layerIndex)
     {
         layerIndex--;
 
@@ -297,9 +245,9 @@ public class LevelGenerator : MonoBehaviour
             {
                 _groundCollider.gameObject.SetActive(true);
             }
-            
-            _groundCollider.position   = Vector3.one * (0.5f * (basicScale - 1)) * Configurables.ReverseFactor;
-            _groundCollider.localScale = Vector3.one * (basicScale + layerIndex  * Configurables.ProgressionFactor);
+
+            _groundCollider.position = Vector3.zero;
+            _groundCollider.localScale = Vector3.one + (Vector3.one * (layerIndex  * Configurables.ProgressionFactor));
         }
     }
 
@@ -337,9 +285,7 @@ public enum ELayerGraphicType
 public struct LevelProperty
 {
     [Header("Cage Size")]
-    public int     BasicSize;
     public Vector2 CageDistance;
-    public float   CameraDistance;
 
     [Header("Cage Layers")]
     public ELayerGraphicType GraphicType;

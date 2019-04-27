@@ -9,42 +9,47 @@ public class Test : MonoBehaviour
     
     // Start is called before the first frame update
     void Start()
-    {        
-        List<Vector3> posList = new List<Vector3>();
+    {
+        StartCoroutine(CreatBox());
+    }
 
-        for (int i = 0; i < 4; i++)
-        {
-            int RowCount = i;
+    IEnumerator CreatBox()
+    {
+        List<Vector3Int> totalLayerPos = new List<Vector3Int>();
+
+        int rowCount = _material.Length;
         
-            for (int x = -RowCount; x <= RowCount; x++)
+        for (int i = 0; i < rowCount; i++)
+        {
+            List<Vector3Int> layerPos = new List<Vector3Int>();
+            
+            for (int x = -i; x <= i; x++)
             {
-                for (int y = -RowCount; y <= RowCount; y++)
+                for (int y = -i; y <= i; y++)
                 {
-                    for (int z = -RowCount; z <= RowCount; z++)
+                    for (int z = -i; z <= i; z++)
                     {
                         Vector3Int pos = new Vector3Int(x, y, z);
 
-                        if (!posList.Contains(pos))
+                        if (!totalLayerPos.Contains(pos))
                         {
-                            ICube cube = Instantiate(_cubePrefab).GetComponent<ICube>();
-                    
-                            cube.Init(i.ToString(),pos,1,_material[0]);
-                    
-                            posList.Add(pos);
+                            layerPos.Add(pos);
+                            totalLayerPos.Add(pos);
                         }
-                        
-                        
                     }
                 }
             }
-        }
-        
-        
-    }
+            
+            Debug.Log(layerPos.Count);
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+            yield return new WaitForEndOfFrame();
+            
+            foreach (var cubePos in layerPos)
+            {
+                ICube cube = Instantiate(_cubePrefab).GetComponent<ICube>();
+                
+                cube.Init(i.ToString(),cubePos + (Vector3.right * (rowCount * 2) * i),1,_material[i]);
+            }
+        }
     }
 }
