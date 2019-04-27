@@ -10,13 +10,11 @@ public class Configurables
     public delegate void DelAttackCube(ICube target, int value);
     public delegate void DelDestroyCube(ICube target);
     public delegate void DelFloatValue(float size);
-    public delegate void DelForwardEdge(Vector3 pos);
     public delegate void DelChangeWeapon(int index);
     public delegate void DelUseWeapon(EWeaponType weapon, Vector3 pos);
 
     public event DelAttackCube EvnAttackCube;
     public event DelFloatValue EvnCageChangeSize;
-    public event DelForwardEdge EvnForwardEdge;
     public event DelChangeWeapon EvnChangeWeapon;
     public event DelFloatValue EvnAreaTimer;
     public event DelUseWeapon EvnUseWeapon;
@@ -40,11 +38,6 @@ public class Configurables
     public void CallCageChangeSizeEvent(float size)
     {
         EvnCageChangeSize?.Invoke(size);
-    }
-
-    public void CallForwardEdgeEvent(Vector3 pos)
-    {
-        EvnForwardEdge?.Invoke(pos);
     }
     
     public void CallChangeWeaponEvent(int index)

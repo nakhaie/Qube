@@ -7,7 +7,8 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] private Transform _cameraPivot;
     [SerializeField] private GameObject _cubePrefab;
     [SerializeField] private Transform  _groundCollider;
-
+    [SerializeField] private float _screenScaleFactor = 8;
+    
     [SerializeField] private LevelProperty _levelProperty;
 
     private readonly Dictionary<int, Vector3Int[]> _cubesInLayers = new Dictionary<int, Vector3Int[]>();
@@ -15,7 +16,7 @@ public class LevelGenerator : MonoBehaviour
 
     private bool _win;
     
-    private float _screenScaleFactor;
+    
     private Vector3 _cameraZoom;
     private float _colorClamp;
 
@@ -31,10 +32,7 @@ public class LevelGenerator : MonoBehaviour
     {
         _camera = Camera.main;
         _config = Configurables.Instance;
-
-        _screenScaleFactor = _levelProperty.CageDistance.y - _levelProperty.CageDistance.x;
-        _screenScaleFactor /= _levelProperty.CageLayers.Length;
-
+        
         _colorClamp = 1.0f / (_levelProperty.CageLayers.Length - 1);
 
         _config.EvnAttackCube += OnAttackCube;
@@ -284,9 +282,6 @@ public enum ELayerGraphicType
 [System.Serializable]
 public struct LevelProperty
 {
-    [Header("Cage Size")]
-    public Vector2 CageDistance;
-
     [Header("Cage Layers")]
     public ELayerGraphicType GraphicType;
     public CageLayerProperty CageLayers;

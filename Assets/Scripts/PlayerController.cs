@@ -33,7 +33,6 @@ public class PlayerController : MonoBehaviour
     private float        _curCageScale;
     private float        _curAreaTime;
     private bool         _firstTouch;
-    private Vector3      _forwardEdge;
     private Vector3      _lastPoint;
     private ICube        _selectedCube;
     private ETouchEffect _touchEffect;
@@ -57,7 +56,6 @@ public class PlayerController : MonoBehaviour
         _explosionArea.gameObject.SetActive(false);
         
         _config.EvnCageChangeSize += OnCageChangeSize;
-        _config.EvnForwardEdge    += OnForwardEdge;
         _config.EvnChangeWeapon   += OnChangeWeapon;
     }
 
@@ -237,6 +235,8 @@ public class PlayerController : MonoBehaviour
         GizmoSize   = Vector3.one;
     }
 
+    private Vector3 _forwardEdge;
+    
     private void CutterAttack(Vector3 start)
     {
         if(start.y < _forwardEdge.y)
@@ -425,11 +425,6 @@ public class PlayerController : MonoBehaviour
     private void OnCageChangeSize(float size)
     {
         _curCageScale = size + SizeOffset;
-    }
-
-    private void OnForwardEdge(Vector3 pos)
-    {
-        _forwardEdge = pos;
     }
 
     private void OnChangeWeapon(int index)
