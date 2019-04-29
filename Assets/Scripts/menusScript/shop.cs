@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class shop : MonoBehaviour
 {
-    public Text coinText, gemText;
+    public Text coinText, gemText,timeText;
     public Button[] tabBtn;
     public GameObject[] pnls;
     public ScrollRect scrll;
@@ -27,6 +27,7 @@ public class shop : MonoBehaviour
     }
     void Update()
     {
-
+        System.TimeSpan timeSpan = System.TimeSpan.FromSeconds(PlayerPrefs.GetFloat("dailyTime"));
+        timeText.text = string.Format("{0:D2}:{1:D2}:{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
     }
 }
