@@ -9,9 +9,10 @@ public class mainMenu : MonoBehaviour
     public Button[] modeGameBtns;
     public Button[] pnlBtns;
     public GameObject[] pnlGo;
+    public GameObject lvlMenuPnl;
     void Start()
     {
-        setCoinGem();
+      UIManager.Instance.setCoinAndGem(coinText, gemText);
         for (int i = 0; i < modeGameBtns.Length; i++)
             clickModesBtn(modeGameBtns[i], i);
 
@@ -35,7 +36,7 @@ public class mainMenu : MonoBehaviour
         }
         else if (indexMode == 1)//arcade
         {
-
+            lvlMenuPnl.SetActive(true);
         }
         else if (indexMode == 3)//timeChallenge
         {
@@ -60,11 +61,6 @@ public class mainMenu : MonoBehaviour
         }
     }
    
-    public void setCoinGem()
-    {
-        coinText.text = "10";
-        gemText.text = "10";
-    }
     void Update()
     {
         
