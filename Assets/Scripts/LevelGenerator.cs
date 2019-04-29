@@ -4,10 +4,10 @@ using UnityEngine.Serialization;
 
 public class LevelGenerator : MonoBehaviour
 {
-    [SerializeField] private Transform _cameraPivot;
+    [SerializeField] private Transform  _cameraPivot;
     [SerializeField] private GameObject _cubePrefab;
     [SerializeField] private Transform  _groundCollider;
-    [SerializeField] private float _screenScaleFactor = 8;
+    [SerializeField] private float      _screenScaleFactor = 8;
     
     [SerializeField] private LevelProperty _levelProperty;
 
@@ -15,13 +15,12 @@ public class LevelGenerator : MonoBehaviour
     private readonly Queue<ICube>                  _cubesPool     = new Queue<ICube>();
 
     private bool _win;
-    
-    
-    private Vector3 _cameraZoom;
-    private float _colorClamp;
 
-    private int _curLayer;
-    private int _curTotalCubes;
+
+    private Vector3 _cameraZoom;
+    private float   _colorClamp;
+    private int     _curLayer;
+    private int     _curTotalCubes;
 
     private ICube[] _backLayerCubes;
 
